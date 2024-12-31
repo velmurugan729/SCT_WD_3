@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #97ffa0; /* Single vibrant color */
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            background: rgb(255, 75, 75);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            margin: 20px auto;
+            max-width: 315px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: #ffeead;
+            border: 3px solid #ff6f69;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 70px;
+            cursor: pointer;
+            color: #5f0f40;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .cell:hover {
+            background: #ffcc5c;
+            border-color: #88d8b0;
+        }
+
+        .game-status {
+            margin: 10px 0;
+            color: #5f0f40;
+            font-weight: bold;
+        }
+
+        #restartBtn, #gameMode, #difficulty {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #ffcc5c;
+            color: rgb(254, 255, 255);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        #restartBtn:hover, #gameMode:hover, #difficulty:hover {
+            background: #ffcc5c;
+            transform: scale(1.05);
+        }
+
+        #gameMode, #difficulty {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>') no-repeat right center;
+            background-size: 20px 20px;
+            padding-right: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="color: #6971e1;">Tic-Tac-Toe</h1>
+        <div id="gameBoard">
+            <!-- Cells will be dynamically added here via JavaScript -->
+        </div>
+        <div class="game-status"></div>
+        <button id="restartBtn">Restart Game</button>
+        <select id="gameMode">
+            <option value="player">Player vs Player</option>
+            <option value="computer">Player vs Computer</option>
+        </select>
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+    <script>
+        // Game variables
+        const gameBoard = document.getElementById('gameBoard');
+        const statusDisplay = document.querySelector('.game-status');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameModeSelect = document.getElementById('gameMode');
+        const difficultySelect = document.getElementById('difficulty');
+
+        let gameActive = true;
+        let currentPlayer = 'X';
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let gameMode = 'player';
+        let difficulty = 'easy';
+
+        // Winning conditions for Tic-Tac-Toe
+        const winningConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        // Initialize the game board
+        function initializeBoard() {
+            gameBoard.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-cell-index', i);
+                cell.addEventListener('click', handleCellClick);
+                gameBoard.appendChild(cell);
+            }
+        }
+
+        // Handle a player's move
+        function handleCellPlayed(clickedCell, clickedCellIndex) {
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+        }
+
+        // Switch players or trigger computer move if in computer mode
+        function handlePlayerChange() {
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(() => computerMove(difficulty), 500);
+            }
+        }
+
+        // Check game results
+        function handleResultValidation() {
+            let roundWon = false;
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.textContent = `Player ${currentPlayer} has won!`;
+                gameActive = false;
+                return;
+            }
+
+            if (!gameState.includes('')) {
+                statusDisplay.textContent = 'Game ended in a draw!';
+                gameActive = false;
+                return;
+            }
+
+            statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+        }
+
+        // Handle click event for cells
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
+
+            if (gameState[clickedCellIndex] !== '' || !gameActive) {
+                return;
+            }
+
+            handleCellPlayed(clickedCell, clickedCellIndex);
+            handleResultValidation();
+            if (gameActive) handlePlayerChange();
+        }
+
+        // AI's move based on difficulty
+        function computerMove(difficultyLevel) {
+            const emptyCells = gameState.reduce((acc, cell, index) => {
+                if (cell === '') acc.push(index);
+                return acc;
+            }, []);
+
+            if (emptyCells.length === 0) return;
+
+            let moveIndex;
+
+            if (difficultyLevel === 'easy') {
+                moveIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            } else if (difficultyLevel === 'medium') {
+                if (Math.random() < 0.7) { // 70% chance of strategic move
+                    moveIndex = strategicMove();
+                } else {
+                    moveIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                }
+            } else { // Hard mode
+                moveIndex = strategicMove() || emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+
+            const cell = document.querySelector(`[data-cell-index='${moveIndex}']`);
+            cell.click();
+        }
+
+        // Simple strategic move for AI
+        function strategicMove() {
+            for (let condition of winningConditions) {
+                let [a, b, c] = condition;
+                if (gameState[a] === gameState[b] && gameState[a] === 'O' && gameState[c] === '') return c;
+                if (gameState[a] === gameState[c] && gameState[a] === 'O' && gameState[b] === '') return b;
+                if (gameState[b] === gameState[c] && gameState[b] === 'O' && gameState[a] === '') return a;
+                
+                // Block player's win
+                if (gameState[a] === gameState[b] && gameState[a] === 'X' && gameState[c] === '') return c;
+                if (gameState[a] === gameState[c] && gameState[a] === 'X' && gameState[b] === '') return b;
+                if (gameState[b] === gameState[c] && gameState[b] === 'X' && gameState[a] === '') return a;
+            }
+            return null; // If no strategic move found
+        }
+
+        // Restart the game
+        function restartGame() {
+            gameActive = true;
+            currentPlayer = 'X';
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+            initializeBoard();
+        }
+
+        // Setup event listeners
+        initializeBoard();
+        restartBtn.addEventListener('click', restartGame);
+        gameModeSelect.addEventListener('change', function() {
+            gameMode = this.value;
+            restartGame();
+        });
+        difficultySelect.addEventListener('change', function() {
+            difficulty = this.value;
+        });
+
+        statusDisplay.textContent = 'Player X\'s turn';
+    </script>
+</body>
+</html>
+
